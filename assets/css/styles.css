@@ -1,0 +1,58 @@
+/* Tipografías y base */
+body {
+    font-family: 'Nunito', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    background-color: #f8fafc;
+}
+
+.navbar.navbar-light.bg-light {
+    background-color: #cfd4da !important;
+}
+
+.title-marker {
+    font-family: 'Permanent Marker', cursive;
+}
+
+/* Botones de pestañas */
+#tab-otras.btn {
+    background-color: #0d6efd;
+}
+
+#tab-propias.btn {
+    border-width: 2px;
+}
+
+/* Tarjetas personalizadas (azul y verde) */
+.vol-card {
+    border-radius: 14px;
+    border: 2px solid rgba(0, 0, 0, 0.35);
+}
+
+.vol-card--blue {
+    background: #0d6efd;
+    color: #fff;
+}
+
+.vol-card--green {
+    background: #198754;
+    color: #fff;
+}
+
+.vol-card__title {
+    font-family: 'Permanent Marker', cursive;
+    letter-spacing: .3px;
+}
+
+.vol-card__date {
+    font-style: italic;
+    opacity: .9;
+}
+
+.vol-card__desc {
+    font-style: italic;
+}
+
+.vol-card__author {
+    font-style: italic;
+    opacity: .95;
+}
+
