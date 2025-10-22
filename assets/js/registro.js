@@ -2,14 +2,14 @@
 // Importamos los datos iniciales y las funciones CRUD de localStorage
 import { usuarios as initialUsers } from './datos.js'; 
 import { obtenerUsuarioActivo, cerrarSesion, 
-         inicializarUsuarios, obtenerUsuarios, 
+         inicializarUsuarios, obtenerUsuarios, // <-- Aseguramos la importación de obtenerUsuarios
          guardarUsuario, eliminarUsuario as eliminarUsuarioStorage 
 } from './almacenaje.js'
 
 
 /* GESTIÓN DE USUARIOS --------------------------------------------------------------------------------*/
 
-// Función para actualizar el estado de login en la interfaz (Sin cambios)
+// Función para actualizar el estado de login en la interfaz
 function updateLoginStatus() {
     // ... (Código para actualizar la barra de navegación)
     const currentUser = obtenerUsuarioActivo();
@@ -26,7 +26,8 @@ function updateLoginStatus() {
             loginLink.onclick = function(e) {
                 e.preventDefault();
                 cerrarSesion();
-                window.location.href = 'login.html';
+                // Redirigir al login después de cerrar sesión
+                window.location.href = 'login.html'; 
             }
         }
     } else {
@@ -43,6 +44,7 @@ function updateLoginStatus() {
 
 function mostrarUsuarios() { /* Mostrar los usuarios creados ----------------------------*/
     const container = document.getElementById('lista-usuarios');
+    // CLAVE: El ID lista-usuarios se inserta en el <tbody>
     container.innerHTML = '';
 
     // [CÓDIGO CLAVE]: Leer siempre la lista actualizada de localStorage
@@ -51,10 +53,12 @@ function mostrarUsuarios() { /* Mostrar los usuarios creados -------------------
     usuarios.forEach((usuario, index) => {
       const fila = document.createElement('tr');
       fila.className = 'align-middle';
+      
+      // La contraseña debe mostrarse oculta, y pasamos el índice (index) a eliminarUsuario
       fila.innerHTML = `
         <td class="align-middle">${usuario.nombre}</td>
         <td class="align-middle">${usuario.email}</td>
-        <td class="align-middle">${usuario.password}</td>
+        <td class="align-middle">********</td> 
         <td class="text-center align-middle">
           <button class="btn btn-sm btn-danger" onclick="eliminarUsuario(${index})" title="Eliminar usuario">
             <i class="bi bi-trash"></i>
@@ -65,28 +69,40 @@ function mostrarUsuarios() { /* Mostrar los usuarios creados -------------------
     });
 }
 
+// Hacemos que la función de borrado sea global para el evento onclick en el HTML
 window.eliminarUsuario = function(indice) { /* Eliminar usuarios ---------------------------------*/
     const currentUser = obtenerUsuarioActivo();
     if (!currentUser) {
         alert('Debes iniciar sesión para eliminar usuarios');
         return;
     }
+
+    const usuarios = obtenerUsuarios();
+    if (currentUser.email === usuarios[indice].email) {
+         alert("No puedes eliminar al usuario activo.");
+         return;
+    }
     
+    if (!confirm(`¿Estás seguro de que quieres eliminar a ${usuarios[indice].nombre}?`)) {
+        return;
+    }
+
     try {
+        // La función en almacenaje.js elimina por índice
         eliminarUsuarioStorage(indice); 
-        // [CÓDIGO CLAVE]: Volver a llamar para refrescar la tabla
-        mostrarUsuarios(); 
+        mostrarUsuarios(); // Refrescar la tabla
     } catch (error) {
-        alert(error.message);
+        // Esto solo debería ocurrir si el índice es inválido (que ya lo maneja almacenaje.js)
+        alert('Error al eliminar el usuario: ' + error.message);
     }
 }
 
 /* EVENTOS -------------------------------------------------------------------------------------------*/
-document.querySelector('#usuarios form').addEventListener('submit', (e) => { /* Alta -----*/
+
+// CLAVE: Cambiar el selector del evento submit para que apunte al formulario dentro del div
+document.querySelector('#usuarios form').addEventListener('submit', (e) => { 
   e.preventDefault();
   
-  // ... (Obtención y validación de campos)
-
   const nombre = document.getElementById('alta-usr-name').value.trim();
   const email = document.getElementById('alta-usr-email').value.trim();
   const password = document.getElementById('alta-usr-pswrd').value;
@@ -111,17 +127,17 @@ document.querySelector('#usuarios form').addEventListener('submit', (e) => { /* 
   // Guardar el nuevo usuario en localStorage
   guardarUsuario(nuevoUsuario);
 
-  // [CÓDIGO CLAVE]: Volver a llamar para refrescar la tabla
-  mostrarUsuarios(); 
+  mostrarUsuarios(); // Refrescar la tabla
   e.target.reset();
   alert('Usuario creado correctamente.');
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicializar localStorage con los usuarios de datos.js si es la primera vez
+    // CLAVE: 1. Inicializar localStorage con los usuarios de datos.js si es la primera vez
+    // Esto asegura que Hamza y Carmen se guarden si la lista 'users' está vacía.
     inicializarUsuarios(initialUsers);
 
     updateLoginStatus();
-    // [CÓDIGO CLAVE]: La llamada inicial que carga los datos persistentes
+    // CLAVE: 2. Cargar los datos persistentes y mostrarlos.
     mostrarUsuarios(); 
 });

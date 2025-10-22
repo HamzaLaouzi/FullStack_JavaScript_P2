@@ -40,21 +40,3 @@ const anuncios = [
 window.usuarios = usuarios
 window.anuncios = anuncios
 
-// Las funciones de sesión se han movido a almacenaje.js
-
-// Eliminar el código original de aquí:
-/*
-window.getCurrentUser = function() {
-    const userStr = localStorage.getItem('currentUser')
-    return userStr ? JSON.parse(userStr) : null
-}
-
-window.setCurrentUser = function(user) {
-    localStorage.setItem('currentUser', JSON.stringify(user))
-}
-
-window.logout = function() {
-    localStorage.removeItem('currentUser')
-    window.location.href = 'login.html'
-}
-*/

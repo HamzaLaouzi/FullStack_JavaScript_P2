@@ -6,7 +6,75 @@ import { obtenerUsuarioActivo, cerrarSesion,
 } from './almacenaje.js';
 
 
-/* GESTIÓN DE VOLUNTARIADOS --------------------------------------------------------------------------*/
+/* GESTIÓN DE CANVAS: GRÁFICO --------------------------------------------------------------------------*/
+
+/**
+ * Dibuja un gráfico de barras simple usando la API HTML5 Canvas.
+ * Compara Peticiones vs Ofertas.
+ * @param {Array} voluntariados - Lista de todos los voluntariados para contar tipos.
+ */
+function drawChart(voluntariados) {
+    const canvas = document.getElementById('voluntariadoChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    ctx.clearRect(0, 0, width, height); // Limpiar el canvas antes de dibujar
+
+    // 1. Contar tipos
+    const counts = voluntariados.reduce((acc, vol) => {
+        // Aseguramos que el campo volunType exista y se cuente
+        acc[vol.volunType] = (acc[vol.volunType] || 0) + 1;
+        return acc;
+    }, {});
+
+    const peticiones = counts['Petición'] || 0;
+    const ofertas = counts['Oferta'] || 0;
+    
+    // 2. Definir datos para las barras
+    const data = [
+        { label: 'Peticiones', count: peticiones, color: '#0d6efd' }, // Azul (Primary)
+        { label: 'Ofertas', count: ofertas, color: '#198754' }      // Verde (Success)
+    ];
+
+    // 3. Parámetros de dibujo
+    const barWidth = 60;
+    const spacing = 100;
+    const padding = 20;
+    // La altura máxima para escalar el gráfico. Mínimo 1 para evitar división por cero.
+    const maxVal = Math.max(peticiones, ofertas, 1); 
+    const chartHeight = height - (padding * 2); 
+    
+    // Calcular punto de inicio horizontal para centrar las barras
+    const totalWidth = (barWidth * data.length) + (spacing * (data.length - 1));
+    const startX = (width - totalWidth) / 2;
+    
+    // 4. Dibujar barras y etiquetas
+    data.forEach((item, index) => {
+        const barActualHeight = (item.count / maxVal) * chartHeight;
+        const x = startX + index * (barWidth + spacing);
+        const y = height - barActualHeight - padding; // Dibujar desde la base hacia arriba
+
+        // Dibujar barra
+        ctx.fillStyle = item.color;
+        ctx.fillRect(x, y, barWidth, barActualHeight);
+
+        // Dibujar valor (número de voluntariados)
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 14px Montserrat';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.count, x + barWidth / 2, y - 5);
+
+        // Dibujar etiqueta de tipo
+        ctx.font = '12px Montserrat';
+        ctx.fillText(item.label, x + barWidth / 2, height - 5);
+    });
+}
+
+
+/* GESTIÓN DE VOLUNTARIADOS (Consulta y Borrado) -----------------------------------------------------*/
 
 // Función asíncrona para obtener y mostrar datos
 async function mostrarVoluntariados() { 
@@ -24,6 +92,7 @@ async function mostrarVoluntariados() {
 
     if (!voluntariados || voluntariados.length === 0) {
       container.innerHTML = '<tr><td colspan="6" class="text-center p-4">No hay voluntariados disponibles.</td></tr>';
+      drawChart([]); // Dibuja el gráfico vacío
       return;
     }
 
@@ -34,7 +103,7 @@ async function mostrarVoluntariados() {
       const fila = document.createElement('tr');
       fila.className = 'align-middle';
       
-      // El botón de eliminar ahora usa el ID único de IndexedDB (anuncio.id)
+      // El botón de eliminar usa el ID único de IndexedDB (anuncio.id)
       const esAutor = currentUser && anuncio.autor === currentUser.email;
       const botonEliminar = esAutor ? `
         <button class="btn btn-sm btn-danger" onclick="eliminarVoluntariado(${anuncio.id})" title="Eliminar voluntariado">
@@ -58,6 +127,9 @@ async function mostrarVoluntariados() {
       container.appendChild(fila);
     });
 
+    // 3. DIBUJAR EL GRÁFICO CANVAS
+    drawChart(voluntariados);
+
   } catch (error) {
     console.error('Error al mostrar voluntariados:', error);
     container.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-danger">Error al cargar los datos.</td></tr>';
@@ -79,15 +151,14 @@ window.eliminarVoluntariado = async function(voluntariadoId) {
   try {
     await eliminarVoluntariadoDB(voluntariadoId); 
     alert('Voluntariado eliminado correctamente.');
-    await mostrarVoluntariados(); // Refrescar
+    await mostrarVoluntariados(); // Refrescar y volver a dibujar el gráfico
   } catch (error) {
     console.error('Error al eliminar:', error);
     alert('Error al eliminar el voluntariado.');
   }
 }
 
-/* EVENTOS -------------------------------------------------------------------------------------------*/
-// El listener de Alta también es asíncrono
+/* EVENTOS DE ALTA ---------------------------------------------------------------------------------*/
 document.querySelector('#voluntariados form').addEventListener('submit', async (e) => { 
   e.preventDefault();
   
@@ -120,9 +191,9 @@ document.querySelector('#voluntariados form').addEventListener('submit', async (
   };
 
   try {
-    // Guardamos en IndexedDB, que generará el ID automáticamente
+    // Guardamos en IndexedDB
     await guardarVoluntariadoDB(nuevoVoluntariado);
-    await mostrarVoluntariados(); // Refrescamos
+    await mostrarVoluntariados(); // Refrescamos y volvemos a dibujar el gráfico
     e.target.reset();
     alert('Voluntariado creado correctamente');
   } catch (error) {
@@ -131,7 +202,7 @@ document.querySelector('#voluntariados form').addEventListener('submit', async (
   }
 });
 
-// Función para actualizar el estado de login en la interfaz (sin cambios)
+// Función para actualizar el estado de login en la interfaz
 function updateLoginStatus() {
     const currentUser = obtenerUsuarioActivo();
     const navUser = document.getElementById('nav-user');
@@ -172,7 +243,6 @@ function updateLoginStatus() {
 async function initializeVoluntariados() {
     // 1. Abrir/Inicializar IndexedDB con datos iniciales
     try {
-        // openDB cargará los datos de initialAnuncios solo si no existe la DB
         await openDB(initialAnuncios); 
     } catch (e) {
         console.error('Fallo al inicializar la base de datos:', e);
