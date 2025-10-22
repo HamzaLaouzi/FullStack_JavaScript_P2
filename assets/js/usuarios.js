@@ -1,15 +1,14 @@
-import { AlmacenajeUsuarios, GestionUsuarioActivo } from './almacenaje.js';
+// CORRECCIÓN: Importa las funciones directamente desde almacenaje.js
+import { obtenerUsuarioActivo, obtenerUsuarios, guardarUsuario, eliminarUsuario } from './almacenaje.js';
 
 class GestionUsuarios {
     constructor() {
-        this.almacenaje = new AlmacenajeUsuarios();
         this.initEventListeners();
         this.actualizarTablaUsuarios();
         this.mostrarUsuarioActivo();
     }
 
     initEventListeners() {
-        // Evento para el formulario de alta de usuario
         document.getElementById('formAltaUsuario').addEventListener('submit', (e) => {
             e.preventDefault();
             this.altaUsuario();
@@ -21,33 +20,36 @@ class GestionUsuarios {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        // Verificar si el usuario ya existe
-        if (this.almacenaje.buscarUsuario(email)) {
+        if (!nombre || !email || !password) {
+             alert('Todos los campos son obligatorios');
+             return;
+        }
+
+        if (obtenerUsuarios().some(u => u.email === email)) {
             alert('Ya existe un usuario con ese correo electrónico');
             return;
         }
 
-        // Crear y guardar el nuevo usuario
         const usuario = { nombre, email, password };
-        this.almacenaje.guardarUsuario(usuario);
+        guardarUsuario(usuario);
         
-        // Limpiar formulario y actualizar tabla
         document.getElementById('formAltaUsuario').reset();
         this.actualizarTablaUsuarios();
+        alert('Usuario creado correctamente.');
     }
 
     actualizarTablaUsuarios() {
         const tbody = document.getElementById('tablaUsuarios');
         tbody.innerHTML = '';
 
-        this.almacenaje.obtenerUsuarios().forEach(usuario => {
+        // Ahora itera y usa el índice para la función de borrado
+        obtenerUsuarios().forEach((usuario, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${usuario.nombre}</td>
                 <td>${usuario.email}</td>
-                <td>********</td>
-                <td>
-                    <button onclick="gestionUsuarios.eliminarUsuario('${usuario.email}')">
+                <td>${usuario.password.replace(/./g, '*')}</td> <td>
+                    <button class="btn btn-sm btn-danger" onclick="window.gestionUsuarios.eliminarUsuarioPorIndice(${index})">
                         Eliminar
                     </button>
                 </td>
@@ -56,19 +58,31 @@ class GestionUsuarios {
         });
     }
 
-    eliminarUsuario(email) {
+    // Exponemos la función globalmente para el evento onclick en el HTML
+    eliminarUsuarioPorIndice(index) {
+        if (!obtenerUsuarioActivo()) {
+            alert('Debes iniciar sesión para eliminar usuarios');
+            return;
+        }
+        
         if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
-            this.almacenaje.eliminarUsuario(email);
-            this.actualizarTablaUsuarios();
+            try {
+                eliminarUsuario(index); 
+                this.actualizarTablaUsuarios();
+            } catch (error) {
+                alert(error.message);
+            }
         }
     }
 
     mostrarUsuarioActivo() {
-        const usuarioActivo = GestionUsuarioActivo.obtenerUsuarioActivo();
-        const elementoUsuarioActivo = document.getElementById('usuarioActivo');
-        elementoUsuarioActivo.textContent = usuarioActivo ? usuarioActivo.nombre : '-no login-';
+        const usuarioActivo = obtenerUsuarioActivo();
+        const elementoUsuarioActivo = document.getElementById('usuarioActivo'); 
+        if (elementoUsuarioActivo) {
+            elementoUsuarioActivo.textContent = usuarioActivo ? usuarioActivo.nombre : '-no login-';
+        }
     }
 }
 
-// Crear instancia global para poder acceder desde el HTML
+// Crear instancia global
 window.gestionUsuarios = new GestionUsuarios();
