@@ -1,88 +1,46 @@
-// CORRECCIÓN: Importa las funciones directamente desde almacenaje.js
-import { obtenerUsuarioActivo, obtenerUsuarios, guardarUsuario, eliminarUsuario } from './almacenaje.js';
+/**
+ * Lógica del fichero usuarios.html
+ */
 
-class GestionUsuarios {
-    constructor() {
-        this.initEventListeners();
-        this.actualizarTablaUsuarios();
-        this.mostrarUsuarioActivo();
-    }
+import { showActiveUser, loadUsersToStorage, addNewUser, showUsersTable } from "./almacenaje.js"
 
-    initEventListeners() {
-        document.getElementById('formAltaUsuario').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.altaUsuario();
-        });
-    }
+// Cargar usuarios al iniciar
+loadUsersToStorage()
 
-    altaUsuario() {
-        const nombre = document.getElementById('nombre').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+// Mostrar usuario activo
+showActiveUser()
 
+// Mostrar tabla de usuarios
+showUsersTable()
+
+// Manejar el formulario de alta de usuario
+const formAltaUsuario = document.getElementById("formAltaUsuario")
+if (formAltaUsuario) {
+    formAltaUsuario.addEventListener("submit", (e) => {
+        e.preventDefault()
+        
+        const nombre = document.getElementById("nombre").value.trim()
+        const email = document.getElementById("email").value.trim()
+        const password = document.getElementById("password").value.trim()
+        
         if (!nombre || !email || !password) {
-             alert('Todos los campos son obligatorios');
-             return;
-        }
-
-        if (obtenerUsuarios().some(u => u.email === email)) {
-            alert('Ya existe un usuario con ese correo electrónico');
-            return;
-        }
-
-        const usuario = { nombre, email, password };
-        guardarUsuario(usuario);
-        
-        document.getElementById('formAltaUsuario').reset();
-        this.actualizarTablaUsuarios();
-        alert('Usuario creado correctamente.');
-    }
-
-    actualizarTablaUsuarios() {
-        const tbody = document.getElementById('tablaUsuarios');
-        tbody.innerHTML = '';
-
-        // Ahora itera y usa el índice para la función de borrado
-        obtenerUsuarios().forEach((usuario, index) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${usuario.nombre}</td>
-                <td>${usuario.email}</td>
-                <td>${usuario.password.replace(/./g, '*')}</td> <td>
-                    <button class="btn btn-sm btn-danger" onclick="window.gestionUsuarios.eliminarUsuarioPorIndice(${index})">
-                        Eliminar
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    // Exponemos la función globalmente para el evento onclick en el HTML
-    eliminarUsuarioPorIndice(index) {
-        if (!obtenerUsuarioActivo()) {
-            alert('Debes iniciar sesión para eliminar usuarios');
-            return;
+            alert("Todos los campos son obligatorios")
+            return
         }
         
-        if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
-            try {
-                eliminarUsuario(index); 
-                this.actualizarTablaUsuarios();
-            } catch (error) {
-                alert(error.message);
-            }
+        // Verificar si el usuario ya existe
+        const usuarios = JSON.parse(localStorage.getItem("storageUsers")) || []
+        if (usuarios.some(u => u.email === email)) {
+            alert("Ya existe un usuario con ese email")
+            return
         }
-    }
-
-    mostrarUsuarioActivo() {
-        const usuarioActivo = obtenerUsuarioActivo();
-        const elementoUsuarioActivo = document.getElementById('usuarioActivo'); 
-        if (elementoUsuarioActivo) {
-            elementoUsuarioActivo.textContent = usuarioActivo ? usuarioActivo.nombre : '-no login-';
-        }
-    }
+        
+        // Añadir el nuevo usuario
+        usuarios.push({ name: nombre, email, password })
+        localStorage.setItem("storageUsers", JSON.stringify(usuarios))
+        
+        alert("Usuario creado correctamente")
+        formAltaUsuario.reset()
+        showUsersTable()
+    })
 }
-
-// Crear instancia global
-window.gestionUsuarios = new GestionUsuarios();

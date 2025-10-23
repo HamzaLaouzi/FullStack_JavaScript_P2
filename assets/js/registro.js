@@ -56,7 +56,7 @@ function mostrarUsuarios() { /* Mostrar los usuarios creados -------------------
       
       // La contraseña debe mostrarse oculta, y pasamos el índice (index) a eliminarUsuario
       fila.innerHTML = `
-        <td class="align-middle">${usuario.nombre}</td>
+        <td class="align-middle">${usuario.name}</td>
         <td class="align-middle">${usuario.email}</td>
         <td class="align-middle">********</td> 
         <td class="text-center align-middle">
@@ -83,7 +83,7 @@ window.eliminarUsuario = function(indice) { /* Eliminar usuarios ---------------
          return;
     }
     
-    if (!confirm(`¿Estás seguro de que quieres eliminar a ${usuarios[indice].nombre}?`)) {
+    if (!confirm(`¿Estás seguro de que quieres eliminar a ${usuarios[indice].name}?`)) {
         return;
     }
 
@@ -103,11 +103,11 @@ window.eliminarUsuario = function(indice) { /* Eliminar usuarios ---------------
 document.querySelector('#usuarios form').addEventListener('submit', (e) => { 
   e.preventDefault();
   
-  const nombre = document.getElementById('alta-usr-name').value.trim();
+  const name = document.getElementById('alta-usr-name').value.trim();
   const email = document.getElementById('alta-usr-email').value.trim();
   const password = document.getElementById('alta-usr-pswrd').value;
 
-  if (!nombre || !email || !password) {
+  if (!name || !email || !password) {
     alert('Todos los campos son obligatorios');
     return;
   }
@@ -119,7 +119,7 @@ document.querySelector('#usuarios form').addEventListener('submit', (e) => {
   }
   
   const nuevoUsuario = {
-    nombre,
+    name,
     email,
     password 
   };
