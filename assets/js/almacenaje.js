@@ -85,9 +85,11 @@ function addUserArray(newUser) {
 export function addNewUser(event) {
     event.preventDefault()
 
-    let userName = document.getElementById("userNameId").value
-    let userEmail = document.getElementById("userEmailId").value
-    let userPassword = document.getElementById("userPasswordId").value
+    // Soportar ambos conjuntos de IDs para compatibilidad con diferentes formularios
+    let userName = document.getElementById("nombre")?.value || document.getElementById("userNameId")?.value
+    let userEmail = document.getElementById("email")?.value || document.getElementById("userEmailId")?.value
+    let userPassword = document.getElementById("password")?.value || document.getElementById("userPasswordId")?.value
+    
     let actualUsers = JSON.parse(localStorage.getItem("storageUsers"))
     let usersExists = actualUsers.some(user => user.email === userEmail)
 
@@ -99,9 +101,13 @@ export function addNewUser(event) {
             addUserArray(newUser)
             alert("Nuevo usuario registrado correctamente")
 
-            document.getElementById("userNameId").value = ""
-            document.getElementById("userEmailId").value = ""
-            document.getElementById("userPasswordId").value = ""
+            // Limpiar ambos conjuntos de campos
+            if (document.getElementById("nombre")) document.getElementById("nombre").value = ""
+            if (document.getElementById("email")) document.getElementById("email").value = ""
+            if (document.getElementById("password")) document.getElementById("password").value = ""
+            if (document.getElementById("userNameId")) document.getElementById("userNameId").value = ""
+            if (document.getElementById("userEmailId")) document.getElementById("userEmailId").value = ""
+            if (document.getElementById("userPasswordId")) document.getElementById("userPasswordId").value = ""
 
             showUsersTable()
         } else {
@@ -504,6 +510,15 @@ function drawChart(userStats) {
     let startX = 100
     let maxHeight = 300
 
+    // Calcular el valor máximo dinámicamente
+    let maxValue = 0
+    users.forEach(user => {
+        maxValue = Math.max(maxValue, userStats[user].oferta, userStats[user].peticion)
+    })
+    
+    // Si no hay datos, usar un valor mínimo de 4 para evitar división por cero
+    if (maxValue === 0) maxValue = 4
+
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.font = "14px Arial"
 
@@ -513,9 +528,9 @@ function drawChart(userStats) {
     ctx.lineTo(80, canvas.height - 50)
     ctx.stroke()
 
-    // Marcas y números del eje Y
-    for (let i = 0; i <= 4; i++) {  // Se reduce el eje Y hasta 4
-        let y = canvas.height - 50 - (i * (maxHeight / 4))
+    // Marcas y números del eje Y - ahora dinámico basado en maxValue
+    for (let i = 0; i <= maxValue; i++) {
+        let y = canvas.height - 50 - (i * (maxHeight / maxValue))
         ctx.fillText(i, 60, y)
         ctx.beginPath()
         ctx.moveTo(75, y)
@@ -525,8 +540,8 @@ function drawChart(userStats) {
 
     users.forEach((user, index) => {
         let x = startX + index * (barWidth * 2 + gap)
-        let ofertaHeight = (userStats[user].oferta / 4) * maxHeight
-        let peticionHeight = (userStats[user].peticion / 4) * maxHeight
+        let ofertaHeight = (userStats[user].oferta / maxValue) * maxHeight
+        let peticionHeight = (userStats[user].peticion / maxValue) * maxHeight
 
         ctx.fillStyle = "#0d6efd"
         ctx.fillRect(x, canvas.height - ofertaHeight - 50, barWidth, ofertaHeight)
