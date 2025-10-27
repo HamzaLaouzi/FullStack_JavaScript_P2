@@ -1,6 +1,4 @@
-/**
-* lógica del fichero index.html
-*/
+
 
 // importamos las funciones necesarias desde "almacenaje.js"
 import { showActiveUser, loadUsersToStorage, startDataBase, getCardsFromDB, moveCard, loadSelectedCards } from './almacenaje.js'
