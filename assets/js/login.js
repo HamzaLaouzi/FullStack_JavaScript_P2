@@ -1,60 +1,46 @@
-/**
-* lógica del fichero login.html
-*/
+import * as almacenaje from "./almacenaje.js";
 
-// Importamos las funciones necesarias de almacenaje.js
-import { loginUser, showActiveUser, loadUsersToStorage } from "./almacenaje.js";
+/* Mostrar el usuario activo ---------------------------------------------------*/
+function mostrarUsuarioActivo() {
+    const logged = document.getElementById("usuarioActivo");
+    const usuarioActivo = almacenaje.obtenerUsuarioActivo();
 
-// Cargar usuarios en el almacenamiento local al iniciar
-loadUsersToStorage();
-
-// Mostrar usuario activo si existe
-showActiveUser();
-
-// Elementos del DOM
-const domSubmitButton = document.getElementById('submitValues');
-const domLoginForm = document.getElementById('loginForm');
-const emailInput = document.getElementById('loginInputEmail');
-const passwordInput = document.getElementById('loginInputPassword');
-
-// Manejador del evento de envío del formulario
-if (domSubmitButton) {
-    domSubmitButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        
-        // Validar formulario
-        if (!domLoginForm.checkValidity()) {
-            e.stopPropagation();
-            domLoginForm.classList.add('was-validated');
-            return;
-        }
-        
-        // Llamar a la función de login
-        loginUser();
-    });
+    if (usuarioActivo) {
+        logged.textContent = usuarioActivo;
+        logged.classList.remove("disabled");
+        logged.removeAttribute("aria-disabled");
+    } else {
+        logged.textContent = "no logged";
+        logged.classList.add("disabled");
+        logged.setAttribute("aria-disabled", "true");
+    }
 }
 
-// Función para manejar el cierre de sesión
-function handleLogout() {
-    localStorage.removeItem('activeUser');
-    window.location.href = 'login.html';
+/* Login -----------------------------------------------------------------------*/
+async function loguearUsuario(event) {
+    event.preventDefault();
+
+    const email = document.getElementById("inputEmail").value.trim();
+    const contraseña = document.getElementById("inputContraseña").value.trim();
+    const loginCorrecto = almacenaje.loguearUsuario(email, contraseña);
+    /* Login pasado al modulo de almacenaje */
+
+    if (loginCorrecto) {
+        alert("Sesión iniciada correctamente");
+        mostrarUsuarioActivo();
+        event.target.reset();
+    } else {
+        alert("Los datos de inicio de sesión son incorrectos");
+    }
 }
 
-// Verificar si hay un usuario logueado al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
-    const activeUser = localStorage.getItem('activeUser');
-    const navUser = document.getElementById('nav-user');
-    
-    if (activeUser && navUser) {
-        navUser.textContent = activeUser;
-        
-        // Añadir botón de cerrar sesión
-        const logoutButton = document.createElement('button');
-        logoutButton.textContent = 'Cerrar sesión';
-        logoutButton.className = 'btn btn-link p-0 ms-2';
-        logoutButton.onclick = handleLogout;
-        
-        navUser.appendChild(document.createElement('br'));
-        navUser.appendChild(logoutButton);
+/* Arranque -------------------------------------------------------------------*/
+document.addEventListener("DOMContentLoaded", () => {
+    mostrarUsuarioActivo();
+
+    /*listener login*/
+    const form = document.querySelector("#login form");
+    if (form) {
+        form.addEventListener("submit", loguearUsuario);
     }
 });

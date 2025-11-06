@@ -1,42 +1,36 @@
-// Datos de usuarios y anuncios para la aplicación
-const usuarios = [
-    {
-        name: 'Hamza',
-        email: 'hamza@hamza.com',
-        password: '123'
-    },
-    {
-        name: 'Carmen',
-        email: 'carmen@carmen.com',
-        password: '123'
-    }
+/* DATOS INICIALES ------------------------------------------------------------------------------------*/
+export const voluntariados = [ /* Voluntariados iniciales ------------------------------------------*/
+  {
+    titulo: "Limpiar casa",
+    usuario: "Edu",
+    fecha: "2024-03-15",
+    descripcion: "Ayuda limpiando una casa.",
+    tipo: "Petición"
+  },
+  {
+    titulo: "Compra",
+    usuario: "Jose",
+    fecha: "2024-03-20",
+    descripcion: "Ayudar a hacer la compra a una persona mayor.",
+    tipo: "Oferta"
+  },
+  {
+    titulo: "Desatasco",
+    usuario: "Jose",
+    fecha: "2024-03-25",
+    descripcion: "Ayudar a desatascar una tubería.",
+    tipo: "Oferta"
+  }
 ];
 
-const anuncios = [
-    {
-        date: "01/10/2025",
-        title: "Madrid",
-        description: "Chico responsable se ofrece a llevar a nuestros mayores al hospital de fuenlabrada de L-V mañana",
-        autor: 'Hamza',
-        email: 'hamza@hamza.com',
-        volunType: "Oferta"
-    },
-    {
-        date: "02/10/2025",
-        title: "Valencia",
-        description: "Chica responsable se ofrece a llevar a nuestros mayores al hospital de valencia de Lunes y miercoles mañana",
-        autor: 'Carmen',
-        email: 'carmen@carmen.com',
-        volunType: "Oferta"
-    },
-    {
-        date: "02/10/2025",
-        title: "Barcelona",
-        description: "Se busca una chica responsable para llevar a nuestros mayores al hospital de barcelona los martes por la tarde",
-        autor: 'Carmen',
-        email: 'carmen@carmen.com',
-        volunType: "Petición"
-    }
+export const usuarios = [ /* Usuarios iniciales ----------------------------------------------------*/
+  { nombre: "Edu",
+    email: "edu@uoc.edu",
+    contraseña: "1234"
+  },
+  { nombre: "Jose", 
+    email: "jose@uoc.edu", 
+    contraseña: "1234" 
+  }
 ];
 
-export { usuarios, anuncios }
