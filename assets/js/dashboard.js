@@ -1,4 +1,3 @@
-import { voluntariados } from "./datos.js";
 import * as almacenaje from "./almacenaje.js";
 
 /* Mostrar el usuario activo ---------------------------------------------------*/
@@ -18,11 +17,12 @@ function mostrarUsuarioActivo() {
 }
 
 /* GESTIÓN TARJETAS VOLUNTARIADOS --------------------------------------------------------------------*/
-function actualizarDashboard() { /* Actualizar las tarjetas con los voluntariados ---------*/
+export async function actualizarDashboard() { /* Actualizar las tarjetas con los voluntariados ---------*/
   const container = document.querySelector('#dashboard .row.justify-content-center');
   container.innerHTML = '';
+  const lista = await almacenaje.obtenerVoluntariados();
 
-  voluntariados.forEach(voluntariado => {
+  lista.forEach(voluntariado => {
     const tarjeta = document.createElement('div');
     tarjeta.className = 'col-md-3 mb-4';
     tarjeta.innerHTML = `
@@ -40,7 +40,7 @@ function actualizarDashboard() { /* Actualizar las tarjetas con los voluntariado
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     mostrarUsuarioActivo();
-    actualizarDashboard();
+    await actualizarDashboard();
 });
