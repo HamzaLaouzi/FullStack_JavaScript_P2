@@ -57,9 +57,17 @@ dragContainer.addEventListener("drop", (e) => {
 
 // listener para ejecutar funciones cuando el DOM haya cargado completamente
 window.addEventListener("DOMContentLoaded", () => {
+    console.log("=== index.js DOMContentLoaded ===")
+    
+    // Cargar usuarios primero (síncrono)
     loadUsersToStorage()
     showActiveUser()
-    startDataBase()
-    getCardsFromDB()
-    loadSelectedCards()
+    
+    // Iniciar la base de datos con callback para sincronización
+    startDataBase(() => {
+        console.log("=== Callback ejecutado en index.js - BD lista ===")
+        // Estas funciones solo se ejecutan cuando la BD está completamente lista
+        getCardsFromDB()
+        loadSelectedCards()
+    })
 })

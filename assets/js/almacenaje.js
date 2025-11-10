@@ -25,59 +25,38 @@ export function loginUser() {
     const domInputEmail = document.getElementById("loginInputEmail")
     const domInputPassword = document.getElementById("loginInputPassword")
 
-    let email = domInputEmail.value
-    let password = domInputPassword.value
-    let actualUsers = localStorage.getItem("storageUsers")
-    actualUsers = JSON.parse(localStorage.getItem("storageUsers"))
-    let userExists = false
+    const email = domInputEmail.value
+    const password = domInputPassword.value
+    const actualUsers = JSON.parse(localStorage.getItem("storageUsers")) || []
+    
+    const userExists = actualUsers.some(user => user.email === email && user.password === password)
 
-    for (let user of actualUsers) {
-        if (user.email === email && user.password === password) {
-            alert("Se ha iniciado sesión correctamente")
-            localStorage.setItem("activeUser", email)
-            userExists = true
-            break
-        }
-    }
-
-    if (!userExists) {
+    if (userExists) {
+        localStorage.setItem("activeUser", email)
+        return true
+    } else {
         alert("Dirección de correo o contraseña incorrectos")
+        return false
     }
-
-    showActiveUser()
 }
 
 // carga los usuarios al WebStorage con la carga del DOM
 export function loadUsersToStorage() {
-    console.log("=== loadUsersToStorage() ejecutándose ===")
-    console.log("Usuarios importados desde datos.js:", usuarios)
-    
-    let storedUsers = localStorage.getItem("storageUsers")
-    if (!storedUsers) {
-        // Usar la variable 'usuarios' importada de datos.js
+    if (!localStorage.getItem("storageUsers")) {
         localStorage.setItem("storageUsers", JSON.stringify(usuarios))
-        console.log("✅ Usuarios cargados en localStorage:", usuarios)
-    } else {
-        console.log("ℹ️ Usuarios ya existen en localStorage:", JSON.parse(storedUsers))
     }
 }
 
-// obtiene los usuarios del WebStorage y los devuelve en un objeto (si no los encuentra los carga del array "usuarios")
+// obtiene los usuarios del WebStorage (alias de obtenerUsuarios para compatibilidad)
 function getDefaultUsers() {
-    let usersInStorage = localStorage.getItem("storageUsers")
-    if (!usersInStorage) {
-        localStorage.setItem("storageUsers", JSON.stringify(usuarios))
-        return usuarios
-    }
-    return JSON.parse(usersInStorage)
+    return JSON.parse(localStorage.getItem("storageUsers")) || []
 }
 
 // obtiene el array de objetos de usuarios del WebStorage y añade el nuevo usuario al array
 function addUserArray(newUser) {
-    let newArrayUsers = getDefaultUsers()
-
-    newArrayUsers.push(newUser)
-    localStorage.setItem("storageUsers", JSON.stringify(newArrayUsers))
+    const users = getDefaultUsers()
+    users.push(newUser)
+    localStorage.setItem("storageUsers", JSON.stringify(users))
 }
 
 // crea un nuevo usuario con los datos obtenidos del DOM. Lo añade al array de objetos de usuarios
@@ -86,34 +65,36 @@ export function addNewUser(event) {
     event.preventDefault()
 
     // Soportar ambos conjuntos de IDs para compatibilidad con diferentes formularios
-    let userName = document.getElementById("nombre")?.value || document.getElementById("userNameId")?.value
-    let userEmail = document.getElementById("email")?.value || document.getElementById("userEmailId")?.value
-    let userPassword = document.getElementById("password")?.value || document.getElementById("userPasswordId")?.value
+    const userName = document.getElementById("nombre")?.value || document.getElementById("userNameId")?.value
+    const userEmail = document.getElementById("email")?.value || document.getElementById("userEmailId")?.value
+    const userPassword = document.getElementById("password")?.value || document.getElementById("userPasswordId")?.value
     
-    let actualUsers = JSON.parse(localStorage.getItem("storageUsers"))
-    let usersExists = actualUsers.some(user => user.email === userEmail)
-
-    if (usersExists) {
-        alert("El usuario ya existe en el sistema")
-    } else {
-        if (userName && userEmail && userPassword) {
-            let newUser = { name: userName, email: userEmail, password: userPassword }
-            addUserArray(newUser)
-            alert("Nuevo usuario registrado correctamente")
-
-            // Limpiar ambos conjuntos de campos
-            if (document.getElementById("nombre")) document.getElementById("nombre").value = ""
-            if (document.getElementById("email")) document.getElementById("email").value = ""
-            if (document.getElementById("password")) document.getElementById("password").value = ""
-            if (document.getElementById("userNameId")) document.getElementById("userNameId").value = ""
-            if (document.getElementById("userEmailId")) document.getElementById("userEmailId").value = ""
-            if (document.getElementById("userPasswordId")) document.getElementById("userPasswordId").value = ""
-
-            showUsersTable()
-        } else {
-            alert("Faltan datos para añadir registro")
-        }
+    if (!userName || !userEmail || !userPassword) {
+        alert("Faltan datos para añadir registro")
+        return
     }
+
+    const actualUsers = getDefaultUsers()
+    if (actualUsers.some(user => user.email === userEmail)) {
+        alert("El usuario ya existe en el sistema")
+        return
+    }
+
+    const newUser = { name: userName, email: userEmail, password: userPassword }
+    addUserArray(newUser)
+    alert("Nuevo usuario registrado correctamente")
+
+    // Limpiar campos del formulario
+    clearFormFields(["nombre", "email", "password", "userNameId", "userEmailId", "userPasswordId"])
+    showUsersTable()
+}
+
+// Función auxiliar para limpiar campos de formulario
+function clearFormFields(fieldIds) {
+    fieldIds.forEach(id => {
+        const field = document.getElementById(id)
+        if (field) field.value = ""
+    })
 }
 
 // añade una nueva fila utilizando los datos del usuario que se pasa por parámetro
@@ -151,31 +132,23 @@ document.addEventListener("click", function (event) {
 // crea un array de objetos con los usuarios del WebStorage, elimina el usuario que coincida con el email que se pasa por parámetro
 // se actualizan los usuarios del WebStorage y se actualiza la tabla
 function deleteUser(email) {
-
-    let actualUsers = JSON.parse(localStorage.getItem("storageUsers"))
-    let updatedUsers = actualUsers.filter(user => user.email !== email)
-
+    const actualUsers = getDefaultUsers()
+    const updatedUsers = actualUsers.filter(user => user.email !== email)
     localStorage.setItem("storageUsers", JSON.stringify(updatedUsers))
-
     showUsersTable()
 }
 
 // muestra una tabla con los usuarios del WebStorage
 export function showUsersTable() {
-    let actualUsersArray = getDefaultUsers()
+    const actualUsersArray = getDefaultUsers()
     const table = document.getElementById("userTableId") || document.getElementById("tablaUsuarios")
     
-    if (!table) {
-        console.error("No se encontró la tabla de usuarios")
-        return
-    }
+    if (!table) return
 
     // Si es un tbody, solo limpiar el contenido
     if (table.tagName === "TBODY") {
         table.innerHTML = ""
-        for (let user of actualUsersArray) {
-            addUserRow(user)
-        }
+        actualUsersArray.forEach(user => addUserRow(user))
     } else {
         // Si es una tabla completa, añadir el header
         table.innerHTML = `
@@ -186,21 +159,16 @@ export function showUsersTable() {
             <th scope="col">Acciones</th>
         </tr>
         `
-        for (let user of actualUsersArray) {
-            addUserRow(user)
-        }
+        actualUsersArray.forEach(user => addUserRow(user))
     }
 }
 
-// ===== FUNCIONES ADICIONALES PARA REGISTRO.JS =====
+// ===== FUNCIONES PARA COMPATIBILIDAD CON REGISTRO.JS =====
 
-// Inicializa los usuarios en localStorage si no existen
+// Inicializa los usuarios en localStorage si no existen (alias de loadUsersToStorage)
 export function inicializarUsuarios(usuariosIniciales) {
     if (!localStorage.getItem("storageUsers")) {
         localStorage.setItem("storageUsers", JSON.stringify(usuariosIniciales))
-        console.log("Usuarios inicializados en localStorage:", usuariosIniciales)
-    } else {
-        console.log("Usuarios ya existen en localStorage")
     }
 }
 
@@ -209,16 +177,14 @@ export function obtenerUsuarios() {
     return JSON.parse(localStorage.getItem("storageUsers")) || []
 }
 
-// Guarda un nuevo usuario en localStorage
+// Guarda un nuevo usuario en localStorage (alias de addUserArray)
 export function guardarUsuario(usuario) {
-    let usuarios = obtenerUsuarios()
-    usuarios.push(usuario)
-    localStorage.setItem("storageUsers", JSON.stringify(usuarios))
+    addUserArray(usuario)
 }
 
 // Elimina un usuario por índice
 export function eliminarUsuario(indice) {
-    let usuarios = obtenerUsuarios()
+    const usuarios = obtenerUsuarios()
     if (indice >= 0 && indice < usuarios.length) {
         usuarios.splice(indice, 1)
         localStorage.setItem("storageUsers", JSON.stringify(usuarios))
@@ -229,9 +195,7 @@ export function eliminarUsuario(indice) {
 export function obtenerUsuarioActivo() {
     const email = localStorage.getItem("activeUser")
     if (!email) return null
-    
-    const usuarios = obtenerUsuarios()
-    return usuarios.find(u => u.email === email) || null
+    return obtenerUsuarios().find(u => u.email === email) || null
 }
 
 // Cierra la sesión del usuario activo
@@ -242,14 +206,14 @@ export function cerrarSesion() {
 // declaramos una variable "db" para la base de datos
 let db
 let dbReady = false
+let dbInitCallback = null
 
 // función para crear la base de datos
 // verificará mediante listeners si hay algún error, si existe la BBDD la iniciará y si no existe la iniciará y creará el almacén
-export function startDataBase() {
-    console.log("=== startDataBase() ejecutándose ===")
-    console.log("Anuncios importados desde datos.js:", anuncios)
-    
-    let request = indexedDB.open("VoluntariadoDB", 1)
+// Acepta un callback que se ejecutará cuando la BD esté completamente lista
+export function startDataBase(callback) {
+    dbInitCallback = callback
+    const request = indexedDB.open("VoluntariadoDB", 1)
 
     request.addEventListener("error", showErrorDB)
     request.addEventListener("upgradeneeded", createStoreDB)
@@ -281,23 +245,27 @@ function initDB(event) {
     db = event.target.result
     dbReady = true
     
-    // Verificar si hay datos en la BD
-    let transaction = db.transaction(["Voluntariados"], "readonly")
-    let storeDB = transaction.objectStore("Voluntariados")
-    let countRequest = storeDB.count()
+    const transaction = db.transaction(["Voluntariados"], "readonly")
+    const storeDB = transaction.objectStore("Voluntariados")
+    const countRequest = storeDB.count()
     
     countRequest.onsuccess = function() {
         if (countRequest.result === 0) {
             // Si no hay datos, cargarlos desde datos.js
-            console.log("BD vacía, cargando datos iniciales...")
-            updateCardsDB().then(() => {
-                console.log("Datos iniciales cargados correctamente en IndexedDB")
-            }).catch(error => {
-                console.error("Error al cargar los datos iniciales:", error)
-            })
+            updateCardsDB()
+                .then(() => executeCallback())
+                .catch(() => executeCallback())
         } else {
-            console.log(`BD ya tiene ${countRequest.result} registros`)
+            // Si ya hay datos, ejecutar callback inmediatamente
+            executeCallback()
         }
+    }
+}
+
+// Función auxiliar para ejecutar el callback
+function executeCallback() {
+    if (dbInitCallback && typeof dbInitCallback === 'function') {
+        dbInitCallback()
     }
 }
 
@@ -305,36 +273,19 @@ function initDB(event) {
 function updateCardsDB() {
     return new Promise((resolve, reject) => {
         if (!db) {
-            console.error("Base de datos no inicializada")
             reject("Base de datos no inicializada")
             return
         }
         
-        console.log("Insertando anuncios en IndexedDB:", anuncios)
-        
-        let transaction = db.transaction(["Voluntariados"], "readwrite")
-        let storeDB = transaction.objectStore("Voluntariados")
+        const transaction = db.transaction(["Voluntariados"], "readwrite")
+        const storeDB = transaction.objectStore("Voluntariados")
 
-        // Limpiar el almacén antes de insertar nuevos datos
-        storeDB.clear().onsuccess = function() {
-            // Insertar los anuncios en la base de datos
-            anuncios.forEach(anuncio => {
-                let request = storeDB.put(anuncio)
-                request.onerror = function() {
-                    console.error("Error al insertar anuncio:", anuncio)
-                }
-            })
+        storeDB.clear().onsuccess = () => {
+            anuncios.forEach(anuncio => storeDB.put(anuncio))
         }
 
-        transaction.oncomplete = function () {
-            console.log("Transacción completada exitosamente")
-            resolve()
-        }
-
-        transaction.onerror = function (event) {
-            console.error("Error en transacción:", event)
-            reject("Error al insertar datos en la BBDD")
-        }
+        transaction.oncomplete = () => resolve()
+        transaction.onerror = () => reject("Error al insertar datos en la BBDD")
     })
 }
 
@@ -599,17 +550,11 @@ export function getCardsFromDB() {
     }
 }
 
-// muestra las tarjetas en el contenedor "Disponibles"
-export function showCardInDragContainer(cardData) {
-    let titleSafe = cardData.title.replace(/\s+/g, '_')
-
-    let cardElement = document.createElement("div")
-    cardElement.classList.add("m-3", "dragBox", "col-6", "col-md-6")
-    cardElement.setAttribute("draggable", "true")
-    cardElement.setAttribute("data-title", titleSafe)
-
-    cardElement.innerHTML = `
-        <div class="card ${cardData.volunType === "Oferta" ? "text-bg-primary" : "text-bg-success"}" style="max-width: 18rem;">
+// Función auxiliar para crear el HTML de una tarjeta
+function createCardHTML(cardData) {
+    const cardClass = cardData.volunType === "Oferta" ? "text-bg-primary" : "text-bg-success"
+    return `
+        <div class="card ${cardClass}" style="max-width: 18rem;">
             <div class="card-body">
                 <h5 class="card-title fw-bold textPoppinsFont">${cardData.title}</h5>
                 <p class="card-text textRockSFont">${cardData.description}</p>
@@ -618,73 +563,71 @@ export function showCardInDragContainer(cardData) {
             </div>
         </div>
     `
+}
 
+// Función auxiliar para crear un elemento de tarjeta draggable
+function createDraggableCard(cardData) {
+    const titleSafe = cardData.title.replace(/\s+/g, '_')
+    const cardElement = document.createElement("div")
+    
+    cardElement.classList.add("m-3", "dragBox", "col-6", "col-md-6")
+    cardElement.setAttribute("draggable", "true")
+    cardElement.setAttribute("data-title", titleSafe)
+    cardElement.innerHTML = createCardHTML(cardData)
+    
     cardElement.addEventListener("dragstart", (e) => {
         e.dataTransfer.setData("text/plain", titleSafe)
     })
+    
+    return cardElement
+}
 
-    // Usar la variable global definida en index.js
+// muestra las tarjetas en el contenedor "Disponibles"
+export function showCardInDragContainer(cardData) {
     if (window.dragContainer) {
-        window.dragContainer.appendChild(cardElement)
+        window.dragContainer.appendChild(createDraggableCard(cardData))
     }
 }
 
 // función para mover las tarjetas, recibirá como parámetros el título de la tarjeta (para tenerla identificada), el contenedor de donde proviene y el contenedor al que se moverá
 export function moveCard(cardTitleSafe, sourceContainer, targetContainer) {
-    let request = indexedDB.open("VoluntariadoDB")
+    const request = indexedDB.open("VoluntariadoDB")
 
     request.onsuccess = function (event) {
-        let db = event.target.result
-        let transaction = db.transaction(["Voluntariados"], "readonly")
-        let storeDB = transaction.objectStore("Voluntariados")
+        const db = event.target.result
+        const transaction = db.transaction(["Voluntariados"], "readonly")
+        const storeDB = transaction.objectStore("Voluntariados")
 
-        let cursorRequest = storeDB.openCursor()
+        const cursorRequest = storeDB.openCursor()
         cursorRequest.onsuccess = function (event) {
-            let pointer = event.target.result
-            if (pointer) {
-                if (pointer.value.title.replace(/\s+/g, '_') === cardTitleSafe) {
-                    let existingCard = targetContainer.querySelector(`[data-title="${cardTitleSafe}"]`)
-                    if (existingCard) return
+            const pointer = event.target.result
+            if (pointer && pointer.value.title.replace(/\s+/g, '_') === cardTitleSafe) {
+                // Verificar si la tarjeta ya existe en el contenedor destino
+                if (targetContainer.querySelector(`[data-title="${cardTitleSafe}"]`)) return
 
-                    let cardElement = document.createElement("div")
-                    cardElement.classList.add("m-3", "dragBox", "col-6", "col-md-6")
-                    cardElement.setAttribute("draggable", "true")
-                    cardElement.setAttribute("data-title", cardTitleSafe)
-                    cardElement.innerHTML = `
-                        <div class="card ${pointer.value.volunType === "Oferta" ? "text-bg-primary" : "text-bg-success"}" style="max-width: 18rem;">
-                            <div class="card-body">
-                                <h5 class="card-title fw-bold textPoppinsFont">${pointer.value.title}</h5>
-                                <p class="card-text textRockSFont">${pointer.value.description}</p>
-                                <p class="card-text fst-italic textPatrickFont">Fecha publicación ${pointer.value.date}</p>
-                                <p class="card-text text-decoration-underline textPatrickFont">Publicado por ${pointer.value.email}</p>
-                            </div>
-                        </div>
-                    `
+                // Crear y añadir la tarjeta al contenedor destino
+                const cardElement = createDraggableCard(pointer.value)
+                targetContainer.appendChild(cardElement)
 
-                    targetContainer.appendChild(cardElement)
+                // Eliminar la tarjeta del contenedor origen
+                const draggedElement = sourceContainer.querySelector(`[data-title="${cardTitleSafe}"]`)
+                if (draggedElement) sourceContainer.removeChild(draggedElement)
 
-                    cardElement.addEventListener("dragstart", (e) => {
-                        e.dataTransfer.setData("text/plain", cardTitleSafe)
+                // Actualizar el almacén de tarjetas seleccionadas
+                if (sourceContainer === window.dropContainer && targetContainer === window.dragContainer) {
+                    removeSelectedCard(cardTitleSafe)
+                } else if (sourceContainer === window.dragContainer && targetContainer === window.dropContainer) {
+                    saveSelectedCard({
+                        title: pointer.value.title,
+                        description: pointer.value.description,
+                        date: pointer.value.date,
+                        email: pointer.value.email,
+                        volunType: pointer.value.volunType
                     })
-
-                    let draggedElement = sourceContainer.querySelector(`[data-title="${cardTitleSafe}"]`)
-                    if (draggedElement) sourceContainer.removeChild(draggedElement)
-
-                    if (sourceContainer === window.dropContainer && targetContainer === window.dragContainer) {
-                        removeSelectedCard(cardTitleSafe)
-                    } else if (sourceContainer === window.dragContainer && targetContainer === window.dropContainer) {
-                        saveSelectedCard({
-                            title: pointer.value.title,
-                            description: pointer.value.description,
-                            date: pointer.value.date,
-                            email: pointer.value.email,
-                            volunType: pointer.value.volunType
-                        })
-                    }
-                    return
                 }
-                pointer.continue()
+                return
             }
+            if (pointer) pointer.continue()
         }
     }
 }
@@ -744,29 +687,9 @@ export function loadSelectedCards() {
 
 // función para añadir tarjetas al contenedor "dropContainer" (Selección)
 export function addCardToDropContainer(cardData) {
-    let cardElement = document.createElement("div")
-    cardElement.classList.add("m-3", "dragBox", "col-6", "col-md-6")
-    cardElement.setAttribute("draggable", "true")
-    cardElement.setAttribute("data-title", cardData.title.replace(/\s+/g, '_'))
-
-    cardElement.innerHTML = `
-    <div class="card ${cardData.volunType === "Oferta" ? "text-bg-primary" : "text-bg-success"}" style="max-width: 18rem;">
-        <div class="card-body">
-            <h5 class="card-title fw-bold textPoppinsFont">${cardData.title}</h5>
-            <p class="card-text textRockSFont">${cardData.description}</p>
-            <p class="card-text fst-italic textPatrickFont">Fecha publicación ${cardData.date}</p>
-            <p class="card-text text-decoration-underline textPatrickFont">Publicado por ${cardData.email}</p>
-        </div>
-    </div>
-    `
-    // Usar la variable global definida en index.js
     if (window.dropContainer) {
-        window.dropContainer.appendChild(cardElement)
+        window.dropContainer.appendChild(createDraggableCard(cardData))
     }
-
-    cardElement.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("text/plain", cardData.title.replace(/\s+/g, '_'))
-    })
 }
 
 // función para eliminar una tarjeta del almacén "TarjetasSeleccionadas"

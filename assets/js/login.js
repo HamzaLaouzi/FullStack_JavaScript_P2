@@ -29,8 +29,10 @@ if (domSubmitButton) {
             return;
         }
         
-        // Llamar a la función de login
-        loginUser();
+        // Llamar a la función de login y redirigir si es exitoso
+        if (loginUser()) {
+            window.location.href = 'index.html';
+        }
     });
 }
 

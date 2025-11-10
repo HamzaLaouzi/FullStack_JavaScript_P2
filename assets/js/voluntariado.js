@@ -14,12 +14,17 @@ submitButton.addEventListener("click", addCardDB)
 
 // listeners para mostrar el usuario activo del WebStorage e iniciar la BBDD 
 window.addEventListener("DOMContentLoaded", () => {
-    loadUsersToStorage() // Cargar usuarios primero
+    console.log("=== voluntariado.js DOMContentLoaded ===")
+    
+    // Cargar usuarios primero (síncrono)
+    loadUsersToStorage()
     showActiveUser()
-    startDataBase()
-    // Esperar un poco para que la BD se inicialice antes de cargar datos
-    setTimeout(() => {
+    
+    // Iniciar la base de datos con callback para sincronización
+    startDataBase(() => {
+        console.log("=== Callback ejecutado - BD lista, cargando visualizaciones ===")
+        // Estas funciones solo se ejecutan cuando la BD está completamente lista
         addCardsInTable()
         getChartData()
-    }, 200)
+    })
 })
