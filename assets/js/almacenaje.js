@@ -569,18 +569,21 @@ function createCardHTML(cardData) {
 function createDraggableCard(cardData) {
     const titleSafe = cardData.title.replace(/\s+/g, '_')
     const cardElement = document.createElement("div")
-    
+
     cardElement.classList.add("m-3", "dragBox", "col-6", "col-md-6")
     cardElement.setAttribute("draggable", "true")
     cardElement.setAttribute("data-title", titleSafe)
+    // Guardar el tipo de voluntariado para poder filtrar luego (Petición / Oferta)
+    cardElement.dataset.volunType = cardData.volunType
     cardElement.innerHTML = createCardHTML(cardData)
-    
+
     cardElement.addEventListener("dragstart", (e) => {
         e.dataTransfer.setData("text/plain", titleSafe)
     })
-    
+
     return cardElement
 }
+
 
 // muestra las tarjetas en el contenedor "Disponibles"
 export function showCardInDragContainer(cardData) {
